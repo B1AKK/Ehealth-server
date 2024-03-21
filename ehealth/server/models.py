@@ -12,12 +12,14 @@ class Manager(User):
 
 
 class Employee(User):
-    status = models.CharField(max_length=64, default="")
-    med_info = models.CharField(max_length=255, default="")
-    manager_id = models.ForeignKey(Manager, null=True, on_delete=models.SET_NULL, related_name="staff")
+    status = models.CharField(max_length=64, default="", blank=True)
+    med_info = models.CharField(max_length=255, default="", blank=True)
+    boss = models.ForeignKey(Manager, null=True, on_delete=models.SET_NULL, related_name="staff")
 
     def jsonify(self):
         return {
+            "id": self.id,
+            'manager_id': self.boss.id,
             "full_name": self.full_name,
             "phone": self.phone,
             "address": self.address,
@@ -34,21 +36,56 @@ class Doctor(User):
 class Form(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=255)
-    doctor_id = models.ForeignKey(Doctor, null=True, on_delete=models.SET_NULL, related_name="forms")
+    doctor = models.ForeignKey(Doctor, null=True, on_delete=models.SET_NULL, related_name="forms")
+
+    def jsonify(self):
+        questions = [question.jsonify() for question in self.questions.all()]
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "doctor_id": self.doctor.id,
+            "questions": questions
+        }
+
+
+def create_form(form_json):
+    doc = Doctor.objects.get(id=form_json['doctor_id'])
+    form = Form(name=form_json['name'], description=form_json['description'], doctor=doc)
+    questions = form_json['questions']
+    form.save()
+
+    for question in questions:
+        Question(
+            form=form,
+            question_text=question["question_text"],
+            type=question["type"],
+            options=question["options"],
+        ).save()
 
 
 class Question(models.Model):
-    form_id = models.ForeignKey(Form, on_delete=models.CASCADE, related_name="questions")
-    question = models.CharField(max_length=255)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name="questions")
+    question_text = models.CharField(max_length=255)
     type = models.CharField(max_length=16, choices={
         "rb": "Radiobutton",
         "chb": "Checkbox",
         "txt": "Text",
     })
-    options = models.JSONField()
+    options = models.JSONField(default=list)
+
+    def jsonify(self):
+        return {
+            "id": self.id,
+            'form_id': self.form.id,
+            "question_text": self.question_text,
+            "type": self.type,
+            "options": self.options
+        }
 
 
 class Answer(models.Model):
-    question_id = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
-    employee_id = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="answers")
     answer = models.CharField(max_length=255)
