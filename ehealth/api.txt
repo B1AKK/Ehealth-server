@@ -1,0 +1,93 @@
+To start the server execute in the project root folder:
+python manage.py runserver
+
+
+=============API============
+ALL DATA IS PROVIDED IN JSON FORMAT
+Employee is represented as:
+{
+    "id": ...,
+    "manager_id": ...,
+    "full_name": ...,
+    "phone": ...,
+    "address": ...,
+    "status": ...,
+    "med_info": ...,
+}
+
+
+GET http://localhost:8000/employees/
+response: list of all employees in the database
+
+GET http://localhost:8000/managers/
+response: list of all managers in the database
+
+GET http://localhost:8000/doctors/
+response: list of all doctors in the database
+
+
+GET http://localhost:8000/managers/<int:manager_id>/staff
+response: list of all employees working for manager with id <int:manager_id>
+
+
+GET http://localhost:8000/doctors/<int:doctor_id>/patients
+response: list of all patient of a doctor
+
+
+# Updating patient's information
+PUT http://localhost:8000/doctors/<int:doctor_id>/patients/<int:patient_id>
+json-content should be provided in the form:
+{
+    'status': '',
+    'med_info': ''
+}
+response: status code 200
+
+
+
+Forms are represented as
+{
+    'id': id,
+    'name': 'test',
+    'description': 'this is a test form',
+    'doctor_id': 4,
+    'questions': [
+        {
+            'id': id,
+            'question_text': 'How are you today?',
+            'type': 'rb',  # radiobutton
+            'options': ['good', 'bad']
+        },
+        {
+            'id': id,
+            'question_text': 'How are you today?',
+            'type': 'chb',  # checkbox
+            'options': ['good', 'bad']
+        },
+        {
+            'id': id,
+            'question_text': 'Test',
+            'type': 'txt',  # text input
+            'options': []
+        }
+    ]
+}
+
+
+Create a form. Do not include 'id' fields in form and question json objects, id will be assigned automatically.
+POST http://localhost:8000/forms/create_form
+json-content: form json
+
+
+
+GET http://localhost:8000/doctors/<int:doctor_id>/forms
+response: list of all forms created by a doctor
+
+
+GET http://localhost:8000/forms/<int:form_id>
+response: form with id <int:form_id>
+
+
+# Update a form
+PUT http://localhost:8000/forms/<int:form_id>
+json-content: form json

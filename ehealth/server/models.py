@@ -65,6 +65,28 @@ def create_form(form_json):
         ).save()
 
 
+def update_form(form_json, form_id):
+    form = Form.objects.get(id=form_id)
+    form.name = form_json['name']
+    form.description = form_json['description']
+    for question_json in form_json['questions']:
+        if 'id' in question_json:
+            question = Question.objects.get(id=question_json['id'])
+            question.question_text = question_json['question_text']
+            question.type = question_json['type']
+            question.options = question_json['options']
+            question.save()
+        else:
+            Question(
+                form=form,
+                question_text=question_json["question_text"],
+                type=question_json["type"],
+                options=question_json["options"],
+            ).save()
+
+    form.save()
+
+
 class Question(models.Model):
     form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name="questions")
     question_text = models.CharField(max_length=255)

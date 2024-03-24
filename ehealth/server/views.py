@@ -30,6 +30,18 @@ def get_all_employees(request):
     return JsonResponse(res, safe=False)
 
 
+def get_all_managers(request):
+    managers = Manager.objects.all()
+    res = [manager.jsonify() for manager in managers]
+    return JsonResponse(res, safe=False)
+
+
+def get_all_doctors(request):
+    doctors = Doctor.objects.all()
+    res = [doctor.jsonify() for doctor in doctors]
+    return JsonResponse(res, safe=False)
+
+
 def get_staff(request, manager_id):
     manager = Manager.objects.get(id=manager_id)
     staff = manager.staff.all()
@@ -48,10 +60,31 @@ def get_patients(request, doctor_id):
     return JsonResponse(res, safe=False)
 
 
-def get_form(request, form_id):
-    form = Form.objects.get(id=form_id)
+@csrf_exempt
+def update_patient(request, doctor_id, patient_id):
+    if request.method == 'PUT':
+        doctor = Doctor.objects.get(id=doctor_id)
+        patient = doctor.patients.get(id=patient_id)
+        data = json.loads(request.body)
+        patient.status = data['status']
+        patient.med_info = data['med_info']
+        patient.save()
+        return HttpResponse('success')
 
-    return JsonResponse(form.jsonify(), safe=False)
+
+@csrf_exempt
+def get_form(request, form_id):
+    if request.method == 'GET':
+        form = Form.objects.get(id=form_id)
+
+        return JsonResponse(form.jsonify(), safe=False)
+
+    if request.method == 'PUT':
+        form_json = json.loads(request.body)
+        print(form_json)
+        update_form(form_json, form_id)
+
+        return HttpResponse("success")
 
 
 def get_doctor_forms(request, doctor_id):
