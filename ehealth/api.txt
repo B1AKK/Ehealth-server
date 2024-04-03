@@ -91,3 +91,17 @@ response: form with id <int:form_id>
 # Update a form
 PUT http://localhost:8000/forms/<int:form_id>
 json-content: form json
+
+
+# Delete a form
+DELETE http://localhost:8000/forms/<int:form_id>
+
+
+# Create notification
+POST http://localhost:8000/managers/<int:manager_id>/create_notification
+
+json-content:
+{
+    'text': 'notification text',
+    'targets': [id1, id2, ...] # ids of employees
+}

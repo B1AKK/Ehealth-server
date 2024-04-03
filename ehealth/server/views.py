@@ -73,7 +73,7 @@ def update_patient(request, doctor_id, patient_id):
 
 
 @csrf_exempt
-def get_form(request, form_id):
+def form_view(request, form_id):
     if request.method == 'GET':
         form = Form.objects.get(id=form_id)
 
@@ -85,6 +85,9 @@ def get_form(request, form_id):
         update_form(form_json, form_id)
 
         return HttpResponse("success")
+
+    if request.method == 'DELETE':
+        Form.objects.get(id=form_id).delete()
 
 
 def get_doctor_forms(request, doctor_id):
@@ -100,3 +103,20 @@ def new_form(request):
     if request.method == 'POST':
         create_form(json.loads(request.body))
         return HttpResponse("success")
+
+
+@csrf_exempt
+def create_notification(request, manager_id):
+    if request.method == 'POST':
+        notification_json = json.loads(request.body)
+        notification = Notification(text=notification_json['text'], manager=Manager.objects.get(id=manager_id))
+        for emp_id in notification_json['targets']:
+            employee = Employee.objects.get(id=emp_id)
+            notification.targets.add(employee)
+
+
+def get_notifications(request, employee_id):
+    employee = Employee.objects.get(id=employee_id)
+    res = [notification.text for notification in employee.notifications]
+
+    return HttpResponse(res)

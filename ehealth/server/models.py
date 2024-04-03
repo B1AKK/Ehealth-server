@@ -111,3 +111,10 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="answers")
     answer = models.CharField(max_length=255)
+
+
+class Notification(models.Model):
+    text = models.CharField(max_length=255)
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE)
+    targets = models.ManyToManyField(Employee, related_name='notifications')
+
