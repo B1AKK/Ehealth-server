@@ -1,4 +1,7 @@
 from django.db import models
+from datetime import datetime
+
+DATE_FORMAT = '%d/%m/%Y'
 
 
 class User(models.Model):
@@ -37,6 +40,7 @@ class Form(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=255)
     doctor = models.ForeignKey(Doctor, null=True, on_delete=models.SET_NULL, related_name="forms")
+    date = models.DateTimeField()
 
     def jsonify(self):
         questions = [question.jsonify() for question in self.questions.all()]
@@ -46,13 +50,19 @@ class Form(models.Model):
             "name": self.name,
             "description": self.description,
             "doctor_id": self.doctor.id,
+            'date': self.date.strftime(DATE_FORMAT),
             "questions": questions
         }
 
 
 def create_form(form_json):
     doc = Doctor.objects.get(id=form_json['doctor_id'])
-    form = Form(name=form_json['name'], description=form_json['description'], doctor=doc)
+    form = Form(
+        name=form_json['name'],
+        description=form_json['description'],
+        doctor=doc,
+        date=datetime.strptime(form_json['date'], DATE_FORMAT)
+    )
     questions = form_json['questions']
     form.save()
 

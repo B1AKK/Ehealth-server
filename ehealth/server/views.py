@@ -3,6 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
 import json
+from datetime import datetime
 
 
 form_json = {
@@ -90,6 +91,14 @@ def form_view(request, form_id):
         Form.objects.get(id=form_id).delete()
 
 
+def forms(request, form_id):
+    forms = Form.objects.all()
+    res = [{'id': form.id, 'date': form.date.strftime(DATE_FORMAT)} for form in forms]
+    return JsonResponse(res)
+
+
+# def send_answer(request, employee_id)
+
 def get_doctor_forms(request, doctor_id):
     doc = Doctor.objects.get(id=doctor_id)
 
@@ -119,4 +128,12 @@ def get_notifications(request, employee_id):
     employee = Employee.objects.get(id=employee_id)
     res = [notification.text for notification in employee.notifications]
 
-    return HttpResponse(res)
+    return JsonResponse(res)
+
+
+def remove_target(request, employee_id, notification_id):
+    if request.method == 'DELETE':
+        notification = Notification.objects.get(id=notification_id)
+        employee = Employee.objects.get(id=employee_id)
+
+        notification.targets.remove(employee)
