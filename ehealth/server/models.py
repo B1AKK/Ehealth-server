@@ -40,7 +40,7 @@ class Form(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=255)
     doctor = models.ForeignKey(Doctor, null=True, on_delete=models.SET_NULL, related_name="forms")
-    date = models.DateTimeField()
+    date = models.DateTimeField(null=True, blank=True)
 
     def jsonify(self):
         questions = [question.jsonify() for question in self.questions.all()]
