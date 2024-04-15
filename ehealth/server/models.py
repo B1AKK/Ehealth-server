@@ -100,7 +100,7 @@ def update_form(form_json, form_id):
 class Question(models.Model):
     form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name="questions")
     question_text = models.CharField(max_length=255)
-    type = models.CharField(max_length=16, choices={
+    type = models.CharField(max_length=3, choices={
         "rb": "Radiobutton",
         "chb": "Checkbox",
         "txt": "Text",
@@ -120,11 +120,11 @@ class Question(models.Model):
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="answers")
-    answer = models.CharField(max_length=255)
+    answer = models.JSONField()
 
 
 class Notification(models.Model):
     text = models.CharField(max_length=255)
-    manager = models.ForeignKey(Manager, on_delete=models.CASCADE)
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='notifications')
     targets = models.ManyToManyField(Employee, related_name='notifications')
 

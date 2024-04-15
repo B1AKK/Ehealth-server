@@ -105,3 +105,42 @@ json-content:
     'text': 'notification text',
     'targets': [id1, id2, ...] # ids of employees
 }
+
+
+GET http://localhost:8000/employees/<int:employee_id>/notifications
+response: notifications list
+
+
+GET http://localhost:8000/managers/<int:manager_id>/notifications
+response: notifications list
+
+
+# update targets
+PUT http://localhost:8000/managers/<int:manager_id>/notifications/<int:notification_id>
+json-content:
+{
+    'targets': [id1, id2, ...]
+}
+
+
+# send an answer to a form
+POST http://localhost:8000/employees/<int:employee_id>/send_answer
+json-content:
+[
+    {
+        'question_id': 1,
+        'answer': ['good'] # radiobutton
+    },
+    {
+        'question_id': 2,
+        'answer': ['abracadabra'] # text
+    },
+    {
+        'question_id': 3,
+        'answer': ['option1', 'option2'] # checkbox
+    },
+]
+
+
+
+
