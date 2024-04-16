@@ -99,7 +99,6 @@ DELETE http://localhost:8000/forms/<int:form_id>
 
 # Create notification
 POST http://localhost:8000/managers/<int:manager_id>/create_notification
-
 json-content:
 {
     'text': 'notification text',
@@ -140,6 +139,21 @@ json-content:
         'answer': ['option1', 'option2'] # checkbox
     },
 ]
+
+
+# assign manager/doctor by code
+PUT employees/<int:employee_id>/assign_manager/<str:code>
+PUT employees/<int:employee_id>/assign_doctor/<str:code>
+
+
+# get doctor/manager id by code
+GET doctors/<str:code>
+GET managers/<str:code>
+
+
+# update doctor/manager code by id
+PUT doctors/<int:doctor_id>/update_code/<str:code>
+PUT managers/<int:manager_id>/update_code/<str:code>
 
 
 

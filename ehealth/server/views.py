@@ -175,7 +175,7 @@ def get_notifications(request, employee_id):
 @api_view(['PUT'])
 def update_targets(request, manager_id, notification_id):
     try:
-        manager = Manager.objects.get(id=notification_id)
+        manager = Manager.objects.get(id=manager_id)
         notification = manager.notifications.get(id=notification_id)
     except Notification.DoesNotExist:
         return Response('Notification not found', status=status.HTTP_404_NOT_FOUND)
@@ -220,3 +220,82 @@ def send_answer(request, employee_id):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
         return Response(status=status.HTTP_201_CREATED)
+
+
+@api_view(['PUT'])
+def update_manager_code(request, manager_id, code):
+    try:
+        manager = Manager.objects.get(id=manager_id)
+    except Manager.DoesNotExist:
+        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        manager.code = code
+        manager.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+def update_doctor_code(request, doctor_id, code):
+    try:
+        doctor = Doctor.objects.get(id=doctor_id)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        doctor.code = code
+        doctor.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_doctor_id(request, code):
+    try:
+        doctor = Doctor.objects.get(code=code)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(doctor.id)
+
+
+@api_view(['GET'])
+def get_manager_id(request, code):
+    try:
+        manager = Manager.objects.get(code=code)
+    except Manager.DoesNotExist:
+        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(manager.id)
+
+
+@api_view(['PUT'])
+def assign_manager(request, employee_id, code):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        manager = Manager.objects.get(code=code)
+    except Employee.DoesNotExist:
+        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
+    except Manager.DoesNotExist:
+        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        employee.boss = manager
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+def assign_doctor(request, employee_id, code):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        doctor = Doctor.objects.get(code=code)
+    except Employee.DoesNotExist:
+        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        doctor.patients.add(employee)
+        return Response(status=status.HTTP_200_OK)

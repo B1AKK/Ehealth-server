@@ -11,13 +11,13 @@ class User(models.Model):
 
 
 class Manager(User):
-    pass
+    code = models.CharField(max_length=64, unique=True)
 
 
 class Employee(User):
     status = models.CharField(max_length=64, default="", blank=True)
     med_info = models.CharField(max_length=255, default="", blank=True)
-    boss = models.ForeignKey(Manager, null=True, on_delete=models.SET_NULL, related_name="staff")
+    boss = models.ForeignKey(Manager, blank=True, null=True, on_delete=models.SET_NULL, related_name="staff")
 
     def jsonify(self):
         return {
@@ -33,7 +33,8 @@ class Employee(User):
 
 class Doctor(User):
     specialization = models.CharField(max_length=64)
-    patients = models.ManyToManyField(Employee)
+    patients = models.ManyToManyField(Employee, blank=True)
+    code = models.CharField(max_length=64, unique=True)
 
 
 class Form(models.Model):
