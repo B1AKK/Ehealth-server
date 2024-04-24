@@ -1,10 +1,14 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .serializers import *
+from .permissions import *
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsDoctor])
 def get_all_employees(request):
     employees = Employee.objects.all()
     serializer = EmployeeSerializer(employees, many=True)
@@ -13,6 +17,7 @@ def get_all_employees(request):
 
 @api_view(['GET'])
 def get_all_managers(request):
+    print(request.user)
     managers = Manager.objects.all()
     serializer = ManagerSerializer(managers, many=True)
     return Response(serializer.data)
@@ -26,276 +31,61 @@ def get_all_doctors(request):
 
 
 @api_view(['GET'])
-def get_staff(request, manager_id):
-    manager = Manager.objects.get(id=manager_id)
-    staff = manager.staff.all()
-
-    serializer = EmployeeSerializer(staff, many=True)
-
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def get_patients(request, doctor_id):
-    doctor = Doctor.objects.get(id=doctor_id)
-    patients = doctor.patients.all()
-
-    serializer = EmployeeSerializer(patients, many=True)
-
-    return Response(serializer.data)
-
-
-@api_view(['PUT'])
-def update_patient(request, doctor_id, patient_id):
-    try:
-        doctor = Doctor.objects.get(id=doctor_id)
-        patient = doctor.patients.get(id=patient_id)
-    except Doctor.DoesNotExist:
-        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
-    except Employee.DoesNotExist:
-        return Response('Patient not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'PUT':
-        if any(field not in ['med_info', 'status'] for field in request.data.keys()):
-            return Response('Permission denied', status=status.HTTP_403_FORBIDDEN)
-
-        serializer = EmployeeSerializer(patient, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def form_view(request, form_id):
-    try:
-        form = Form.objects.get(id=form_id)
-    except Form.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = FormSerializer(form)
-        return Response(serializer.data)
-
-    if request.method == 'PUT':
-        serializer = FormSerializer(form, data=request.body)
-
-        if serializer.is_valid():
-            questions_json = request.body.get('questions_data', [])
-            for question_json in questions_json:
-                question_json['form_id'] = form.id
-                if 'id' in question_json:
-                    question_id = question_json['id']
-                    try:
-                        question = form.questions.get(id=question_id)
-                    except Question.DoesNotExist:
-                        return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
-                    question_serializer = QuestionSerializer(question, data=questions_json)
-                else:
-                    question_serializer = QuestionSerializer(data=questions_json)
-                if question_serializer.is_valid():
-                    question_serializer.save()
-                else:
-                    return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            to_delete = request.body.get('to_delete', [])
-            for question_id in to_delete:
-                try:
-                    form.questions.get(id=question_id).delete()
-                except Question.DoesNotExist:
-                    return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-    if request.method == 'DELETE':
-        form.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['GET'])
 def forms_view(request):
     forms = Form.objects.all()
     res = [{'id': form.id, 'date': form.date.strftime(DATE_FORMAT)} for form in forms]
     return Response(res)
 
 
-@api_view(['GET'])
-def get_doctor_forms(request, doctor_id):
-    doc = Doctor.objects.get(id=doctor_id)
-    forms = doc.forms.all()
-    serializer = FormSerializer(forms, many=True)
+@api_view(['POST'])
+def signup(request):
+    classes = {
+        'employee': EmployeeSerializer,
+        'doctor': DoctorSerializer,
+        'manager': ManagerSerializer
+    }
 
-    return Response(serializer.data)
+    role = request.data.get('role', '')
+    serializer_cls = classes.get(role, None)
+    if serializer_cls is None:
+        return Response('Incorrect role', status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = serializer_cls(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        user.set_password(request.data['password'])
+        user.save()
+        token = Token.objects.create(user=user)
+        return Response({'token': token.key})
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
-def new_form(request):
-    if request.method == 'POST':
-        serializer = FormSerializer(data=request.data)
-        if serializer.is_valid():
-            form_instance = serializer.save()
+def login(request):
+    models_cls = {
+        'employee': Employee,
+        'doctor': Doctor,
+        'manager': Manager,
+    }
 
-            questions_data = request.data.get('questions_data', [])
-            for question_data in questions_data:
-                question_data['form_id'] = form_instance.id
-                print(question_data)
-                question_serializer = QuestionSerializer(data=question_data)
-                if question_serializer.is_valid():
-                    question_serializer.save()
-                else:
-                    form_instance.delete()
-                    return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    classes = {
+        'employee': EmployeeSerializer,
+        'doctor': DoctorSerializer,
+        'manager': ManagerSerializer,
+    }
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def create_notification(request, manager_id):
-    if request.method == 'POST':
-        request.data['manager_id'] = manager_id
-        serializer = NotificationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-def get_notifications(request, employee_id):
-    employee = Employee.objects.get(id=employee_id)
-    serializer = NotificationSerializer(employee.notifications, many=True)
-
-    return Response(serializer.data)
-
-
-@api_view(['PUT'])
-def update_targets(request, manager_id, notification_id):
     try:
-        manager = Manager.objects.get(id=manager_id)
-        notification = manager.notifications.get(id=notification_id)
-    except Notification.DoesNotExist:
-        return Response('Notification not found', status=status.HTTP_404_NOT_FOUND)
-    except Manager.DoesNotExist:
-        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.get(username=request.data['username'])
+        if not user.check_password(request.data['password']):
+            raise User.DoesNotExist()
+    except User.DoesNotExist:
+        return Response('User not found', status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'PUT':
+    role = user.role
+    model = models_cls.get(role, User)
+    serializer_cls = classes.get(role, UserSerializer)
+    user = model.objects.get(id=user.id)
+    token = Token.objects.get(user=user)
+    serializer = serializer_cls(user)
 
-        notification.targets.clear()
-        targets = request.data.get('targets', [])
-        for employee_id in targets:
-            try:
-                employee = Employee.objects.get(id=employee_id)
-            except Employee.DoesNotExist:
-                return Response(f'Employee {employee_id} not found', status=status.HTTP_404_NOT_FOUND)
-            notification.targets.add(employee)
-
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def get_manager_notifications(request, manager_id):
-    try:
-        manager = Manager.objects.get(id=manager_id)
-    except Manager.DoesNotExist:
-        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = NotificationSerializer(manager.notifications, many=True)
-        return Response(serializer.data)
-
-
-@api_view(['POST'])
-def send_answer(request, employee_id):
-
-    if request.method == 'POST':
-        for answer_json in request.data:
-            answer_json['employee_id'] = employee_id
-            serializer = AnswerSerializer(data=answer_json)
-
-            if not serializer.is_valid():
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            serializer.save()
-        return Response(status=status.HTTP_201_CREATED)
-
-
-@api_view(['PUT'])
-def update_manager_code(request, manager_id, code):
-    try:
-        manager = Manager.objects.get(id=manager_id)
-    except Manager.DoesNotExist:
-        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'PUT':
-        manager.code = code
-        manager.save()
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['PUT'])
-def update_doctor_code(request, doctor_id, code):
-    try:
-        doctor = Doctor.objects.get(id=doctor_id)
-    except Doctor.DoesNotExist:
-        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'PUT':
-        doctor.code = code
-        doctor.save()
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def get_doctor_id(request, code):
-    try:
-        doctor = Doctor.objects.get(code=code)
-    except Doctor.DoesNotExist:
-        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        return Response(doctor.id)
-
-
-@api_view(['GET'])
-def get_manager_id(request, code):
-    try:
-        manager = Manager.objects.get(code=code)
-    except Manager.DoesNotExist:
-        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        return Response(manager.id)
-
-
-@api_view(['PUT'])
-def assign_manager(request, employee_id, code):
-    try:
-        employee = Employee.objects.get(id=employee_id)
-        manager = Manager.objects.get(code=code)
-    except Employee.DoesNotExist:
-        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
-    except Manager.DoesNotExist:
-        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'PUT':
-        employee.boss = manager
-        employee.save()
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['PUT'])
-def assign_doctor(request, employee_id, code):
-    try:
-        employee = Employee.objects.get(id=employee_id)
-        doctor = Doctor.objects.get(code=code)
-    except Employee.DoesNotExist:
-        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
-    except Doctor.DoesNotExist:
-        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'PUT':
-        doctor.patients.add(employee)
-        return Response(status=status.HTTP_200_OK)
+    return Response({'token': token.key, 'role': role, 'user': serializer.data})

@@ -1,17 +1,41 @@
 from django.db import models
 from datetime import datetime
+from django.contrib.auth.models import AbstractUser
+import random
+import string
 
 DATE_FORMAT = '%d/%m/%Y'
 
 
-class User(models.Model):
+def random_code():
+    while True:
+        code = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=16))
+        if not (Manager.objects.filter(code=code).exists() or Doctor.objects.filter(code=code).exists()):
+            return code
+
+
+class User(AbstractUser):
     full_name = models.CharField(max_length=255)
     address = models.CharField(max_length=255, default="")
     phone = models.CharField(max_length=32)
 
+    @property
+    def role(self):
+        if Employee.objects.filter(id=self.id).exists():
+            return 'employee'
+        if Manager.objects.filter(id=self.id).exists():
+            return 'manager'
+        if Doctor.objects.filter(id=self.id).exists():
+            return 'doctor'
+        return 'unknown'
+
+
 
 class Manager(User):
-    code = models.CharField(max_length=64, unique=True)
+    code = models.CharField(max_length=16, unique=True, default=random_code)
+
+    class Meta:
+        db_table = 'manager_table'
 
 
 class Employee(User):
@@ -19,22 +43,19 @@ class Employee(User):
     med_info = models.CharField(max_length=255, default="", blank=True)
     boss = models.ForeignKey(Manager, blank=True, null=True, on_delete=models.SET_NULL, related_name="staff")
 
-    def jsonify(self):
-        return {
-            "id": self.id,
-            'manager_id': self.boss.id,
-            "full_name": self.full_name,
-            "phone": self.phone,
-            "address": self.address,
-            "status": self.status,
-            "med_info": self.med_info,
-        }
+    class Meta:
+        db_table = 'employee_table'
+    # last updated
+
 
 
 class Doctor(User):
     specialization = models.CharField(max_length=64)
     patients = models.ManyToManyField(Employee, blank=True)
-    code = models.CharField(max_length=64, unique=True)
+    code = models.CharField(max_length=16, unique=True, default=random_code)
+
+    class Meta:
+        db_table = 'doctor_table'
 
 
 class Form(models.Model):
@@ -42,18 +63,8 @@ class Form(models.Model):
     description = models.CharField(max_length=255)
     doctor = models.ForeignKey(Doctor, null=True, on_delete=models.SET_NULL, related_name="forms")
     date = models.DateTimeField(null=True, blank=True)
+    targets = models.ManyToManyField(Employee, related_name='forms')
 
-    def jsonify(self):
-        questions = [question.jsonify() for question in self.questions.all()]
-
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "doctor_id": self.doctor.id,
-            'date': self.date.strftime(DATE_FORMAT),
-            "questions": questions
-        }
 
 
 def create_form(form_json):
@@ -107,15 +118,6 @@ class Question(models.Model):
         "txt": "Text",
     })
     options = models.JSONField(default=list)
-
-    def jsonify(self):
-        return {
-            "id": self.id,
-            'form_id': self.form.id,
-            "question_text": self.question_text,
-            "type": self.type,
-            "options": self.options
-        }
 
 
 class Answer(models.Model):

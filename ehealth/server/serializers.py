@@ -3,12 +3,20 @@ from rest_framework.exceptions import ValidationError
 from .models import *
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name', 'address', 'phone']
+
+
 class EmployeeSerializer(serializers.ModelSerializer):
-    manager_id = serializers.PrimaryKeyRelatedField(source='boss', queryset=Manager.objects.all())
+    manager_id = serializers.PrimaryKeyRelatedField(source='boss', queryset=Manager.objects.all(), required=False)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Employee
-        fields = ['id', 'manager_id', 'full_name', 'phone', 'address', 'status', 'med_info']
+        fields = ['id', 'username', 'password', 'email',
+                  'manager_id', 'full_name', 'phone', 'address', 'status', 'med_info']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -23,10 +31,12 @@ class FormSerializer(serializers.ModelSerializer):
     doctor_id = serializers.PrimaryKeyRelatedField(source='doctor', queryset=Doctor.objects.all())
     questions = QuestionSerializer(many=True, required=False)
     date = serializers.SerializerMethodField()
+    targets = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), many=True, required=False,
+                                                 write_only=True)
 
     class Meta:
         model = Form
-        fields = ['id', 'name', 'description', 'doctor_id', 'date', 'questions']
+        fields = ['id', 'name', 'description', 'doctor_id', 'date', 'targets', 'questions']
 
     def create(self, validated_data):
         date_str = validated_data.get('date', datetime.now().strftime(DATE_FORMAT))
@@ -38,19 +48,26 @@ class FormSerializer(serializers.ModelSerializer):
 
 
 class ManagerSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = Manager
-        fields = '__all__'
+        fields = ['id', 'username', 'password', 'email', 'code',
+                  'full_name', 'address', 'phone']
 
 
 class DoctorSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = Doctor
-        fields = '__all__'
+        fields = ['id', 'username', 'password', 'email', 'code',
+                  'full_name', 'specialization', 'address', 'phone']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    targets = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), many=True, required=False)
+    targets = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), many=True, required=False,
+                                                 write_only=True)
     manager_id = serializers.PrimaryKeyRelatedField(source='manager', queryset=Manager.objects.all())
 
     class Meta:
@@ -76,7 +93,6 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
     def validate(self, attrs):
-        print(attrs)
         question = attrs['question']
         answer_list = attrs['answer']
         if question.type == 'rb':
