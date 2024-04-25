@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from .models import *
 
 
@@ -20,7 +20,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    form_id = serializers.PrimaryKeyRelatedField(source='form', queryset=Form.objects.all())
+    form_id = serializers.PrimaryKeyRelatedField(queryset=Form.objects.all(), source='form')
+    id = serializers.IntegerField(read_only=False, required=False)
 
     class Meta:
         model = Question
@@ -31,17 +32,75 @@ class FormSerializer(serializers.ModelSerializer):
     doctor_id = serializers.PrimaryKeyRelatedField(source='doctor', queryset=Doctor.objects.all())
     questions = QuestionSerializer(many=True, required=False)
     date = serializers.SerializerMethodField()
-    targets = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), many=True, required=False,
-                                                 write_only=True)
+    targets = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), many=True, required=False)
+    to_delete = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), many=True, required=False, write_only=True)
 
     class Meta:
         model = Form
-        fields = ['id', 'name', 'description', 'doctor_id', 'date', 'targets', 'questions']
+        fields = ['id', 'name', 'description', 'doctor_id', 'date', 'targets', 'questions', 'to_delete']
+
+
+    def validate(self, attrs):
+        doctor = attrs['doctor']
+        targets = attrs.get('targets', list())
+        for target in targets:
+            if not doctor.patients.filter(id=target.id).exists():
+                raise ValidationError(f'Employee {target.id} is not a patient of doctor {doctor.id}')
+        return super().validate(attrs)
 
     def create(self, validated_data):
+        validated_data.pop('to_delete', None)
+
         date_str = validated_data.get('date', datetime.now().strftime(DATE_FORMAT))
         validated_data['date'] = datetime.strptime(date_str, DATE_FORMAT)
-        return Form.objects.create(**validated_data)
+
+        targets_data = validated_data.pop('targets', list())
+        questions_data = validated_data.pop('questions', list())
+
+        form = Form.objects.create(**validated_data)
+
+        form.targets.set(targets_data)
+
+        for question_data in questions_data:
+            question_data.pop(id, None)
+            Question.objects.create(form=form, **question_data)
+
+        return form
+
+    def update(self, instance, validated_data):
+        # print(validated_data)
+        questions_data = validated_data.pop('questions', list())
+        to_delete = validated_data.pop('to_delete', list())
+        instance = super().update(instance, validated_data)
+
+        for question in to_delete:
+            question.delete()
+
+        for question_data in questions_data:
+            question_data['form_id'] = instance.id
+            print(question_data)
+            if 'id' in question_data:
+                try:
+                    print('get check')
+                    question = instance.questions.get(id=question_data['id'])
+                    print('get check after')
+                except Question.DoesNotExist:
+                    raise NotFound(f'Question({question_data["id"]}) not found')
+                print('update check')
+                question_serializer = QuestionSerializer(question, data=question_data, partial=True)
+                print('update check after')
+
+            else:
+                print('create check')
+                question_serializer = QuestionSerializer(data=question_data)
+                print('create check after')
+
+            if not question_serializer.is_valid():
+                print('validity check failed', question_serializer.errors)
+                raise ValidationError(question_serializer.errors)
+            question_serializer.save()
+
+        return instance
 
     def get_date(self, obj):
         return obj.date.strftime(DATE_FORMAT)
@@ -93,6 +152,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
         question = attrs['question']
         answer_list = attrs['answer']
         if question.type == 'rb':

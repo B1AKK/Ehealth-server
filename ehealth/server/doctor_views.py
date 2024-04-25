@@ -81,24 +81,23 @@ def get_doctor_id(request, code):
 @api_view(['POST'])
 @permission_classes([IsDoctorOwner])
 def new_form(request, doctor_id):
-    if request.method == 'POST':
-        request.data['doctor_id'] = doctor_id
-        serializer = FormSerializer(data=request.data)
-        if serializer.is_valid():
-            form_instance = serializer.save()
+    request.data['doctor_id'] = doctor_id
+    serializer = FormSerializer(data=request.data)
+    if serializer.is_valid():
+        form_instance = serializer.save()
 
-            questions_data = request.data.get('questions_data', [])
-            for question_data in questions_data:
-                question_data['form_id'] = form_instance.id
-                question_serializer = QuestionSerializer(data=question_data)
-                if question_serializer.is_valid():
-                    question_serializer.save()
-                else:
-                    form_instance.delete()
-                    return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # questions_data = request.data.get('questions_data', [])
+        # for question_data in questions_data:
+        #     question_data['form_id'] = form_instance.id
+        #     question_serializer = QuestionSerializer(data=question_data)
+        #     if question_serializer.is_valid():
+        #         question_serializer.save()
+        #     else:
+        #         form_instance.delete()
+        #         return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -117,32 +116,34 @@ def form_view(request, doctor_id, form_id):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        serializer = FormSerializer(form, data=request.body)
+        request.data['doctor_id'] = doctor_id
+        serializer = FormSerializer(form, data=request.data, partial=True)
 
         if serializer.is_valid():
-            questions_json = request.body.get('questions_data', [])
-            for question_json in questions_json:
-                question_json['form_id'] = form.id
-                if 'id' in question_json:
-                    question_id = question_json['id']
-                    try:
-                        question = form.questions.get(id=question_id)
-                    except Question.DoesNotExist:
-                        return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
-                    question_serializer = QuestionSerializer(question, data=questions_json)
-                else:
-                    question_serializer = QuestionSerializer(data=questions_json)
-                if question_serializer.is_valid():
-                    question_serializer.save()
-                else:
-                    return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # questions_json = request.data.get('questions_data', [])
+            # for question_json in questions_json:
+            #     question_json['form_id'] = form.id
+            #     if 'id' in question_json:
+            #         question_id = question_json['id']
+            #         try:
+            #             question = form.questions.get(id=question_id)
+            #         except Question.DoesNotExist:
+            #             return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
+            #         question_serializer = QuestionSerializer(question, data=questions_json)
+            #     else:
+            #         question_serializer = QuestionSerializer(data=questions_json)
+            #     if question_serializer.is_valid():
+            #         question_serializer.save()
+            #     else:
+            #         return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #
+            # to_delete = request.data.get('to_delete', [])
+            # for question_id in to_delete:
+            #     try:
+            #         form.questions.get(id=question_id).delete()
+            #     except Question.DoesNotExist:
+            #         return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
 
-            to_delete = request.body.get('to_delete', [])
-            for question_id in to_delete:
-                try:
-                    form.questions.get(id=question_id).delete()
-                except Question.DoesNotExist:
-                    return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
