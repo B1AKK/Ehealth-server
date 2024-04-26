@@ -53,3 +53,23 @@ class FormAccess(BasePermission):
 
         return False
 
+
+class IsBoss(BasePermission):
+    def has_permission(self, request, view):
+        try:
+            manager = Manager.objects.get(id=request.user.id)
+        except Manager.DoesNotExist:
+            return False
+
+        return manager.staff.filter(id=view.kwargs.get('employee_id', 0)).exists()
+
+
+class IsDoctorOf(BasePermission):
+    def has_permission(self, request, view):
+        try:
+            doctor = Doctor.objects.get(id=request.user.id)
+        except Doctor.DoesNotExist:
+            return False
+
+        return doctor.patients.filter(id=view.kwargs.get('employee_id', 0)).exists()
+

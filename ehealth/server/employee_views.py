@@ -23,7 +23,7 @@ def get_notifications(request, employee_id):
 @permission_classes([IsEmployeeOwner])
 def remove_notification(request, employee_id, notification_id):
     try:
-        employee = Manager.objects.get(id=employee_id)
+        employee = Employee.objects.get(id=employee_id)
         notification = employee.notifications.get(id=notification_id)
     except Notification.DoesNotExist:
         return Response('Notification not found', status=status.HTTP_404_NOT_FOUND)
@@ -39,11 +39,12 @@ def remove_notification(request, employee_id, notification_id):
 def send_answer(request, employee_id):
     for answer_json in request.data:
         answer_json['employee_id'] = employee_id
-        serializer = AnswerSerializer(data=answer_json)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
+    serializer = AnswerSerializer(data=request.data, many=True)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer.save()
+
     return Response(status=status.HTTP_201_CREATED)
 
 
@@ -111,6 +112,47 @@ def form_view(request, employee_id, form_id):
 
 
 
+@api_view(['DELETE'])
+@permission_classes([IsEmployeeOwner | IsBoss])
+def remove_manager(request, employee_id):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
+
+    employee.boss = None
+    employee.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# @api_view(['DELETE'])
+@api_view(['GET'])
+@permission_classes([IsDoctorOf])
+def get_answers(request, employee_id):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
+
+    forms = Form.objects.filter(questions__answers__employee=employee).distinct()
+    res = [{'id': form.id, 'date': form.date.strftime(DATE_FORMAT)} for form in forms]
+
+    return Response(res)
+
+
+@api_view(['GET'])
+@permission_classes([IsDoctorOf])
+def get_form_answer(request, employee_id, form_id):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        form = Form.objects.get(id=form_id)
+    except Form.DoesNotExist:
+        return Response('Form not found', status=status.HTTP_404_NOT_FOUND)
+    except Employee.DoesNotExist:
+        return Response('Employee not found', status=status.HTTP_404_NOT_FOUND)
+
+    answers = employee.answers.filter(question__form=form)
+    serializer = AnswerSerializer(answers, many=True)
+
+    return Response(serializer.data)
+
+

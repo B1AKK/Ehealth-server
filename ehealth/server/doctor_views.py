@@ -42,6 +42,21 @@ def update_patient(request, doctor_id, patient_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['DELETE'])
+@permission_classes([IsEmployeeOwner, IsDoctorOwner])
+def remove_patient(request, doctor_id, employee_id):
+    try:
+        doctor = Doctor.objects.get(id=doctor_id)
+        patient = doctor.patients.get(id=employee_id)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+    except Employee.DoesNotExist:
+        return Response('Patient not found', status=status.HTTP_404_NOT_FOUND)
+
+    doctor.patients.remove(patient)
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(['GET'])
 @permission_classes([IsDoctorOwner])
 def get_forms(request, doctor_id):
@@ -120,32 +135,9 @@ def form_view(request, doctor_id, form_id):
         serializer = FormSerializer(form, data=request.data, partial=True)
 
         if serializer.is_valid():
-            # questions_json = request.data.get('questions_data', [])
-            # for question_json in questions_json:
-            #     question_json['form_id'] = form.id
-            #     if 'id' in question_json:
-            #         question_id = question_json['id']
-            #         try:
-            #             question = form.questions.get(id=question_id)
-            #         except Question.DoesNotExist:
-            #             return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
-            #         question_serializer = QuestionSerializer(question, data=questions_json)
-            #     else:
-            #         question_serializer = QuestionSerializer(data=questions_json)
-            #     if question_serializer.is_valid():
-            #         question_serializer.save()
-            #     else:
-            #         return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            #
-            # to_delete = request.data.get('to_delete', [])
-            # for question_id in to_delete:
-            #     try:
-            #         form.questions.get(id=question_id).delete()
-            #     except Question.DoesNotExist:
-            #         return Response(f'Question({question_id}) not found', status=status.HTTP_400_BAD_REQUEST)
-
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':

@@ -101,6 +101,18 @@ Response json:
 ]
 ```
 
+### GET /employees/<employee_id>/forms/answers
+*List of all forms an employee has answered*
+Response json: 
+```json lines
+[
+  {"id": xxx, "date": "dd/mm/yyy"},
+  {"id": xxx, "date": "dd/mm/yyy"},
+  ...
+]
+```
+
+
 ### GET /employees/<employee_id>/forms/<form_id>
 Response json: 
 ```json lines
@@ -136,8 +148,24 @@ Response json:
 }
 ```
 
+### GET /employees/<employee_id>/forms/<form_id>/answer
+*Get an answer to the form*
+Response json:
+```json lines
+[
+  {
+    "question_id": xxx,
+    "answer": ["xxx", ...],
+  },
+  ...
+]
+```
+
 ### DELETE /employees/<employee_id>/forms/<form_id>
 *Removes employee from form targets*
+
+### DELETE /employees/<employee_id>/remove_manager
+*Sets employee manager to None*
 
 
 ## Doctor endpoints
@@ -190,6 +218,10 @@ Content json:
   "med_info": "xxx"
 }
 ```
+
+
+### DELETE /doctors/<doctor_id>/patients/<patient_id>/remove
+*Removes an employee from doctor's patient*
 
 
 ### POST /doctors/<doctor_id>/new_form

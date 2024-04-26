@@ -68,7 +68,6 @@ class FormSerializer(serializers.ModelSerializer):
         return form
 
     def update(self, instance, validated_data):
-        # print(validated_data)
         questions_data = validated_data.pop('questions', list())
         to_delete = validated_data.pop('to_delete', list())
         instance = super().update(instance, validated_data)
@@ -78,22 +77,15 @@ class FormSerializer(serializers.ModelSerializer):
 
         for question_data in questions_data:
             question_data['form_id'] = instance.id
-            print(question_data)
             if 'id' in question_data:
                 try:
-                    print('get check')
                     question = instance.questions.get(id=question_data['id'])
-                    print('get check after')
                 except Question.DoesNotExist:
                     raise NotFound(f'Question({question_data["id"]}) not found')
-                print('update check')
                 question_serializer = QuestionSerializer(question, data=question_data, partial=True)
-                print('update check after')
 
             else:
-                print('create check')
                 question_serializer = QuestionSerializer(data=question_data)
-                print('create check after')
 
             if not question_serializer.is_valid():
                 print('validity check failed', question_serializer.errors)
@@ -144,7 +136,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class AnswerSerializer(serializers.ModelSerializer):
     question_id = serializers.PrimaryKeyRelatedField(source='question', queryset=Question.objects.all())
-    employee_id = serializers.PrimaryKeyRelatedField(source='employee', queryset=Employee.objects.all())
+    employee_id = serializers.PrimaryKeyRelatedField(source='employee', queryset=Employee.objects.all(), write_only=True)
 
     class Meta:
         model = Answer
