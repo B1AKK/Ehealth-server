@@ -7,36 +7,6 @@ from .serializers import *
 from .permissions import *
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsDoctor])
-def get_all_employees(request):
-    employees = Employee.objects.all()
-    serializer = EmployeeSerializer(employees, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def get_all_managers(request):
-    print(request.user)
-    managers = Manager.objects.all()
-    serializer = ManagerSerializer(managers, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def get_all_doctors(request):
-    doctors = Doctor.objects.all()
-    serializer = DoctorSerializer(doctors, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def forms_view(request):
-    forms = Form.objects.all()
-    res = [{'id': form.id, 'date': form.date.strftime(DATE_FORMAT)} for form in forms]
-    return Response(res)
-
-
 @api_view(['POST'])
 def signup(request):
     classes = {
