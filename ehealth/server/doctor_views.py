@@ -43,7 +43,7 @@ def update_patient(request, doctor_id, patient_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsEmployeeOwner, IsDoctorOwner])
+@permission_classes([IsEmployeeOwner | IsDoctorOwner])
 def remove_patient(request, doctor_id, employee_id):
     try:
         doctor = Doctor.objects.get(id=doctor_id)
