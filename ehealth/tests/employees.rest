@@ -1,0 +1,67 @@
+### Signup
+POST localhost:8000/signup
+Content-Type: application/json
+
+{
+  "role": "employee",
+  "username": "bob2",
+  "password": "123",
+  "full_name": "vlad",
+  "address": "kyiv",
+  "phone": "123",
+  "specialization": "special"
+}
+
+### Login
+POST localhost:8000/login
+Content-Type: application/json
+
+{
+  "username": "bob1",
+  "password": "123"
+}
+
+### Assign doctor
+PUT localhost:8000/employees/4/assign_doctor/fyaNhDdtzH2k8yEq
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Assign manager
+PUT localhost:8000/employees/4/assign_manager/xzgSxpwIEyFYiIcy
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Remove manager
+DELETE localhost:8000/employees/4/remove_manager
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Get forms
+GET localhost:8000/employees/4/forms
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Get a form
+GET localhost:8000/employees/4/forms/13
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Remove a form
+DELETE localhost:8000/employees/4/forms/16
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Send answer
+POST localhost:8000/employees/4/send_answer
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+Content-Type: application/json
+
+[
+  {
+    "question_id": "23",
+    "answer": ["bad"]
+  }
+]
+
+### Get notifications
+GET localhost:8000/employees/4/notifications
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Remove notification
+DELETE localhost:8000/employees/4/notifications/1
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+

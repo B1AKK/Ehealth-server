@@ -1,0 +1,90 @@
+### Signup
+POST localhost:8000/signup
+Content-Type: application/json
+
+{
+  "role": "doctor",
+  "username": "boba",
+  "password": "123",
+  "full_name": "vlad",
+  "address": "kyiv",
+  "phone": "123",
+  "specialization": "special"
+}
+
+### Login
+POST localhost:8000/login
+Content-Type: application/json
+
+{
+  "username": "boba",
+  "password": "123"
+}
+
+### Get patients
+GET localhost:8000/doctors/2/patients
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+
+### Create form
+POST localhost:8000/doctors/2/new_form
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+Content-Type: application/json
+
+{
+    "name": "test2",
+    "description": "this form",
+    "targets": [4],
+    "questions": [
+        {
+            "question_text": "How are you today?",
+            "type": "rb",
+            "options": ["good", "bad"]
+        },
+        {
+            "question_text": "Test",
+            "type": "txt",
+            "options": []
+        }
+    ]
+}
+
+### Get forms
+GET localhost:8000/doctors/2/forms
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+
+### Get a form
+GET localhost:8000/doctors/2/forms/14
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+
+### Delete a form
+DELETE localhost:8000/doctors/2/forms/12
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+
+### Update a form
+PUT localhost:8000/doctors/2/forms/16
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+Content-Type: application/json
+
+{
+    "targets": [4],
+    "questions": [
+        {
+            "question_text": "How are you today?",
+            "type": "rb",
+            "options": ["good", "bad"]
+        },
+        {
+            "question_text": "Test",
+            "type": "txt",
+            "options": []
+        }
+    ]
+}
+
+### Get answers
+GET localhost:8000/employees/4/forms/answers
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+
+### Get an answer to a particular form
+GET localhost:8000/employees/4/forms/13/answer
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb

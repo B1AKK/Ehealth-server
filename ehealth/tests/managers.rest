@@ -1,0 +1,35 @@
+### Signup
+POST localhost:8000/signup
+Content-Type: application/json
+
+{
+  "role": "manager",
+  "username": "cool_guy",
+  "password": "123",
+  "full_name": "vlad",
+  "address": "kyiv",
+  "phone": "123"
+}
+
+### Login
+POST localhost:8000/login
+Content-Type: application/json
+
+{
+  "username": "cool_guy",
+  "password": "123"
+}
+
+### Get staff
+GET localhost:8000/managers/6/staff
+Authorization: Token bc8ea074de0c1f2a1532c1ff312d32ca756a2b2e
+
+### Create notification
+POST localhost:8000/managers/6/create_notification
+Authorization: Token bc8ea074de0c1f2a1532c1ff312d32ca756a2b2e
+Content-Type: application/json
+
+{
+  "text": "Hello everyone",
+  "targets": [4]
+}
