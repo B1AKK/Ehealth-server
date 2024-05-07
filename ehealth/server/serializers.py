@@ -20,7 +20,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    form_id = serializers.PrimaryKeyRelatedField(queryset=Form.objects.all(), source='form')
+    form_id = serializers.PrimaryKeyRelatedField(queryset=Form.objects.all(), source='form', required=False)
     id = serializers.IntegerField(read_only=False, required=False)
 
     class Meta:
