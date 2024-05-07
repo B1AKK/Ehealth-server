@@ -77,7 +77,8 @@ class FormSerializer(serializers.ModelSerializer):
 
         for question_data in questions_data:
             question_data['form_id'] = instance.id
-            if 'id' in question_data:
+            id = question_data['id']
+            if id > 0:
                 try:
                     question = instance.questions.get(id=question_data['id'])
                 except Question.DoesNotExist:
@@ -85,6 +86,7 @@ class FormSerializer(serializers.ModelSerializer):
                 question_serializer = QuestionSerializer(question, data=question_data, partial=True)
 
             else:
+                question_data.pop('id')
                 question_serializer = QuestionSerializer(data=question_data)
 
             if not question_serializer.is_valid():
