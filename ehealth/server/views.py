@@ -26,7 +26,7 @@ def signup(request):
         user.set_password(request.data['password'])
         user.save()
         token = Token.objects.create(user=user)
-        return Response({'token': token.key})
+        return Response({'token': token.key, 'role': role, 'user': serializer.data})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
