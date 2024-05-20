@@ -16,19 +16,22 @@ urlpatterns = [
     path("employees/<int:employee_id>/forms/<int:form_id>", employee_views.form_view),
     path("employees/<int:employee_id>/forms/<int:form_id>/answer", employee_views.get_form_answer),
     path("employees/<int:employee_id>/remove_manager", employee_views.remove_manager),
+    path("employees/<int:employee_id>/remove_doctor", employee_views.remove_doctor),
 
     path("doctors/<str:code>", doctor_views.get_doctor_id),
+    path("doctors/<int:doctor_id>", doctor_views.doctor_info),
     path("doctors/<int:doctor_id>/update_code", doctor_views.update_doctor_code),
     path('doctors/<int:doctor_id>/patients', doctor_views.get_patients),
     path('doctors/<int:doctor_id>/patients/<int:patient_id>', doctor_views.update_patient),
-    path('doctors/<int:doctor_id>/patients/<int:employee_id>/remove', doctor_views.remove_patient),
     path('doctors/<int:doctor_id>/new_form', doctor_views.new_form),
     path('doctors/<int:doctor_id>/forms', doctor_views.get_forms),
     path('doctors/<int:doctor_id>/forms/<int:form_id>', doctor_views.form_view),
+    path('doctors/<int:doctor_id>/forms/<int:form_id>/assign_targets', doctor_views.assign_targets),
 
     path("managers/<str:code>", manager_views.get_manager_id),
+    path("managers/<int:manager_id>", manager_views.manager_info),
     path('managers/<int:manager_id>/staff', manager_views.get_staff),
     path('managers/<int:manager_id>/update_code', manager_views.update_manager_code),
-    path('managers/<int:manager_id>/create_notification', manager_views.create_notification),
+    path('managers/<int:manager_id>/create_notification', manager_views.create_notification)
 ]
 

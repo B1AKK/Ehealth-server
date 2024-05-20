@@ -42,21 +42,6 @@ def update_patient(request, doctor_id, patient_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['DELETE'])
-@permission_classes([IsEmployeeOwner | IsDoctorOwner])
-def remove_patient(request, doctor_id, employee_id):
-    try:
-        doctor = Doctor.objects.get(id=doctor_id)
-        patient = doctor.patients.get(id=employee_id)
-    except Doctor.DoesNotExist:
-        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
-    except Employee.DoesNotExist:
-        return Response('Patient not found', status=status.HTTP_404_NOT_FOUND)
-
-    doctor.patients.remove(patient)
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 @api_view(['GET'])
 @permission_classes([IsDoctorOwner])
 def get_forms(request, doctor_id):
@@ -143,3 +128,32 @@ def form_view(request, doctor_id, form_id):
     if request.method == 'DELETE':
         form.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PUT'])
+@permission_classes([IsDoctorOwner])
+def assign_targets(request, doctor_id, form_id):
+    try:
+        doctor = Doctor.objects.get(id=doctor_id)
+        form = doctor.forms.get(id=form_id)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+    except Form.DoesNotExist:
+        return Response('Form not found', status=status.HTTP_404_NOT_FOUND)
+
+    form.targets.add(*request.data.get('targets', []))
+    form.save()
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsEmployee])
+def doctor_info(request, doctor_id):
+    try:
+        doctor = Doctor.objects.get(id=doctor_id)
+    except Doctor.DoesNotExist:
+        return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
+
+    serializer = DoctorSerializer(doctor)
+
+    return Response(serializer.data)

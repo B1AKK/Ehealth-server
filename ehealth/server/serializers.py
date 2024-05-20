@@ -10,13 +10,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    manager_id = serializers.PrimaryKeyRelatedField(source='boss', queryset=Manager.objects.all(), required=False)
+    manager_id = serializers.PrimaryKeyRelatedField(source='boss', read_only=True)
+    doctor_id = serializers.PrimaryKeyRelatedField(source='assigned_doctor', read_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Employee
         fields = ['id', 'username', 'password', 'email',
-                  'manager_id', 'full_name', 'phone', 'address', 'status', 'med_info']
+                  'manager_id', 'doctor_id', 'full_name', 'phone', 'address', 'status', 'med_info']
 
 
 class QuestionSerializer(serializers.ModelSerializer):

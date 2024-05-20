@@ -55,3 +55,16 @@ def get_manager_id(request, code):
         return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
 
     return Response({'id': manager.id})
+
+
+@api_view(['GET'])
+@permission_classes([IsEmployee])
+def manager_info(request, manager_id):
+    try:
+        manager = Manager.objects.get(id=manager_id)
+    except Manager.DoesNotExist:
+        return Response('Manager not found', status=status.HTTP_404_NOT_FOUND)
+
+    serializer = DoctorSerializer(manager)
+
+    return Response(serializer.data)

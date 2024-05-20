@@ -45,7 +45,7 @@ class FormAccess(BasePermission):
         except Form.DoesNotExist:
             return False
 
-        if request.user.id == form.doctor.id:
+        if request.user.id == form.assigned_doctor.id:
             return True
 
         if request.method == 'GET':

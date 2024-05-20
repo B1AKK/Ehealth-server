@@ -3,13 +3,12 @@ POST localhost:8000/signup
 Content-Type: application/json
 
 {
-  "role": "employee",
-  "username": "bob2",
+  "role": "doctor",
+  "username": "bob",
   "password": "123",
   "full_name": "vlad",
   "address": "kyiv",
-  "phone": "123",
-  "specialization": "special"
+  "phone": "123"
 }
 
 ### Login
@@ -31,6 +30,10 @@ Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
 
 ### Remove manager
 DELETE localhost:8000/employees/4/remove_manager
+Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
+
+### Remove doctor
+DELETE localhost:8000/employees/4/remove_doctor
 Authorization: Token c69314b70ea01bae5c2fcfe1ef88d7fb1ae89057
 
 ### Get forms

@@ -167,6 +167,9 @@ Response json:
 ### DELETE /employees/<employee_id>/remove_manager
 *Sets employee manager to None*
 
+### DELETE /employees/<employee_id>/remove_doctor
+*Sets employee doctor to None*
+
 
 ## Doctor endpoints
 
@@ -218,10 +221,6 @@ Content json:
   "med_info": "xxx"
 }
 ```
-
-
-### DELETE /doctors/<doctor_id>/patients/<patient_id>/remove
-*Removes an employee from doctor's patient*
 
 
 ### POST /doctors/<doctor_id>/new_form
@@ -323,6 +322,17 @@ Content json:
       "options": []
     }
   ]
+}
+```
+
+
+### PUT /doctors/<doctor_id>/forms/<form_id>/assign_targets
+*Add form targets*  
+Content json:
+
+```json lines
+{
+  "targets": [id1, id2, ...]
 }
 ```
 

@@ -4,7 +4,7 @@ Content-Type: application/json
 
 {
   "role": "doctor",
-  "username": "boba",
+  "username": "bob",
   "password": "123",
   "full_name": "vlad",
   "address": "kyiv",
@@ -53,7 +53,7 @@ GET localhost:8000/doctors/2/forms
 Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
 
 ### Get a form
-GET localhost:8000/doctors/2/forms/14
+GET localhost:8000/doctors/2/forms/17
 Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
 
 ### Delete a form
@@ -61,24 +61,35 @@ DELETE localhost:8000/doctors/2/forms/12
 Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
 
 ### Update a form
-PUT localhost:8000/doctors/2/forms/16
+PUT localhost:8000/doctors/2/forms/17
 Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
 Content-Type: application/json
 
 {
-    "targets": [4],
+    "to_delete": [0],
     "questions": [
         {
+            "id": 0,
             "question_text": "How are you today?",
             "type": "rb",
             "options": ["good", "bad"]
         },
         {
+            "id": 37,
             "question_text": "Test",
             "type": "txt",
             "options": []
         }
     ]
+}
+
+### Update targets
+PUT localhost:8000/doctors/2/forms/17/assign_targets
+Authorization: Token 4425e3e888ef87bc902c7a6e04d8c9badbd3bcdb
+Content-Type: application/json
+
+{
+  "targets": [3]
 }
 
 ### Get answers

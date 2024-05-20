@@ -75,7 +75,8 @@ def assign_doctor(request, employee_id, code):
     except Doctor.DoesNotExist:
         return Response('Doctor not found', status=status.HTTP_404_NOT_FOUND)
 
-    doctor.patients.add(employee)
+    employee.assigned_doctor = doctor
+    employee.save()
     return Response(status=status.HTTP_200_OK)
 
 
@@ -154,5 +155,18 @@ def get_form_answer(request, employee_id, form_id):
     serializer = AnswerSerializer(answers, many=True)
 
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsEmployeeOwner | IsDoctorOf])
+def remove_doctor(request, employee_id):
+    try:
+        patient = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        return Response('Patient not found', status=status.HTTP_404_NOT_FOUND)
+
+    patient.assigned_doctor = None
+    patient.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 

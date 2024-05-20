@@ -38,24 +38,24 @@ class Manager(User):
         db_table = 'manager_table'
 
 
-class Employee(User):
-    status = models.CharField(max_length=64, default="", blank=True)
-    med_info = models.CharField(max_length=255, default="", blank=True)
-    boss = models.ForeignKey(Manager, blank=True, null=True, on_delete=models.SET_NULL, related_name="staff")
-
-    class Meta:
-        db_table = 'employee_table'
-    # last updated
-
-
-
 class Doctor(User):
-    specialization = models.CharField(max_length=64)
-    patients = models.ManyToManyField(Employee, blank=True)
+    specialization = models.CharField(max_length=64, blank=True, null=True, default='')
     code = models.CharField(max_length=16, unique=True, default=random_code)
 
     class Meta:
         db_table = 'doctor_table'
+
+
+
+class Employee(User):
+    status = models.CharField(max_length=64, default="", blank=True)
+    med_info = models.CharField(max_length=255, default="", blank=True)
+    boss = models.ForeignKey(Manager, blank=True, null=True, on_delete=models.SET_NULL, related_name="staff")
+    assigned_doctor = models.ForeignKey(Doctor, blank=True, null=True, on_delete=models.SET_NULL, related_name='patients')
+
+    class Meta:
+        db_table = 'employee_table'
+    # last updated
 
 
 class Form(models.Model):
