@@ -1,3 +1,7 @@
+# Ehealth project
+This was my study project, the goal of which was to develop a mobile application that could allow employers to track their empoyees' health condition. This repository contains the backend which was implemented using Django REST framework.
+
+
 # API description
 
 **For each request except signup and login an authorization header must be provided**  
